@@ -1,0 +1,71 @@
+access-policy:
+  - name: datacenter-ingress-policy
+    comment: This policy controls ingress into the data center.
+    owner: sec-team@company.com
+    ingress-network: DATACENTER
+    rules:
+      - type: ingress-critical-flow
+        comment: |
+          The network team wants to make sure that all the client VLANs have HTTP/S access to the data center.
+          If this rule is violated, do not push, we will have an outage.
+        source-address: VLAN10 VLAN20 VLAN30
+        source-exclude: VLAN10_IF VLAN20_IF VLAN30_IF
+        destination-port: HTTP HTTPS
+        protocol: tcp udp
+      - type: ingress-deny
+        comment: VLAN30 has our general non-engineering employees (sales, marketing, HR).
+                 They will never need SSH access to servers so this should be denied.
+        source-address: VLAN30
+        destination-port: SSH
+        protocol: tcp
+      - type: ingress-deny
+        comment: VLAN40 must never be able to reach the datacenter.
+        source-address: VLAN40
+  - name: datacenter-egress-policy
+    comment: This policy controls egress from our data center.
+    egress-network: DATACENTER
+    owner: sec-team@company.com
+    rules:
+      - type: egress-deny
+        comment: Do not allow the datacenter to access the VLANs over HTTP. VLANs should not be hosting services.
+        destination-address: VLANS
+        destination-port: HTTP HTTPS
+        protocol: tcp udp
+      - type: egress-deny-others
+        comment: Security wishes to limit egress from the data center heavily.
+        within:
+          - protocol: tcp
+            destination-address: ANY
+            destination-exclude: RFC1918
+        deny-all-except:
+          flows:
+            - destination-address: ANY
+              destination-exclude: RFC1918
+              destination-port: HTTPS HTTP SFTP
+              protocol: tcp
+  - name: finance-databases-ingress-policy
+    comment: |
+      Finance wants to define their own policies. These can overlap, add, or even conflict
+      as rules are run independently 
+    owner: finance-eng@company.com
+    ingress-network: FIN_DB
+    rules:
+      - type: ingress-critical-flow
+        comment: |
+          Ensure MYSQL access to financial databases in the data center
+          to finance vlan.
+        source-address: VLAN20
+        source-exclude: VLAN20_IF
+        destination-port: MYSQL
+        protocol: tcp
+  - name: finance-databases-egress-policy
+    comment: Access policy for our finance servers.
+    owner: finance-eng@company.com
+    egress-network: FIN_SRV
+    rules:
+      - type: egress-critical-flow
+        comment: |
+          Ensure access from the datacenter finance servers to our bank.
+        destination-address: BANK_OF_COMPANY
+        destination-port: SFTP HTTPS
+        protocol: tcp udp
