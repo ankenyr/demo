@@ -1,6 +1,6 @@
 access-policy:
   - name: staff-vlan-policy
-    comment: Access that the staff vlan has.
+    comment: Access that the staff vlan has .
     egress-network:
       source-address: VLAN30
       source-exclude: VLAN30_IF
