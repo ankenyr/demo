@@ -1,6 +1,6 @@
 access-policy:
   - name: datacenter-ingress-policy
-    comment: This policy controls ingress into the data center.
+    comment: This policy controls ingress into the data center .
     owner: sec-team@company.com
     ingress-network: DATACENTER
     rules:
